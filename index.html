@@ -4,75 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pomodoro Timer with Matrix Animation</title>
-    <style>
-        :root {
-            --background-color: black;
-            --text-color: #0f0;
-            --button-color: rgba(0, 255, 0, 0.5);
-            --button-hover-color: rgba(0, 255, 0, 0.7);
-            --select-color: rgba(0, 0, 0, 0.5);
-            --select-hover-color: rgba(0, 0, 0, 0.7);
-            --font-family: 'Courier New', Courier, monospace;
-        }
-
-        body, html {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            background-color: var(--background-color);
-            color: var(--text-color);
-            font-family: var(--font-family);
-        }
-        canvas {
-            display: block;
-        }
-        #timer {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 72px;
-            background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 0 30px var(--button-color);
-            color: var(--text-color);
-        }
-        .button-container {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 20px;
-        }
-        button {
-            padding: 15px 30px;
-            font-size: 30px;
-            background-color: var(--button-color);
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            box-shadow: 0 0 15px var(--button-color);
-            color: var(--text-color);
-        }
-        button:hover {
-            background-color: var(--button-hover-color);
-        }
-        select {
-            padding: 10px 20px;
-            font-size: 24px;
-            background-color: var(--select-color);
-            border: none;
-            border-radius: 5px;
-            color: var(--text-color);
-            cursor: pointer;
-            box-shadow: 0 0 10px var(--button-color);
-        }
-        select:hover {
-            background-color: var(--select-hover-color);
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div id="timer">25:00</div>
@@ -88,142 +20,24 @@
     </div>
     <canvas id="matrixCanvas"></canvas>
 
-    <script>
-        const canvas = document.getElementById('matrixCanvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+    <div id="popup" class="hidden">
+        <div id="popup-content">
+            <h2>Time's up!</h2>
+            <p>Do you want to take a 5-minute break?</p>
+            <div class="popup-buttons">
+                <button id="okButton">Ok</button>
+                <button id="skipButton">Skip</button>
+            </div>
+        </div>
+    </div>
 
-        const matrixChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%$#@!';
-        const matrix = matrixChars.split('');
+    <div id="alert" class="hidden">
+        <div id="alert-content">
+            <h2>Break time is over!</h2>
+            <p>Get back to work!</p>
+        </div>
+    </div>
 
-        const fontSize = 10;
-        const columns = canvas.width / fontSize;
-        const drops = [];
-
-        for (let x = 0; x < columns; x++) {
-            drops[x] = 1;
-        }
-
-        let themeColor = '#0f0'; // Initial theme color
-
-        function drawMatrix() {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            ctx.fillStyle = themeColor; // Use the updated themeColor
-            ctx.font = fontSize + 'px arial';
-
-            for (let i = 0; i < drops.length; i++) {
-                const text = matrix[Math.floor(Math.random() * matrix.length)];
-                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
-
-                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
-                    drops[i] = 0;
-                }
-                drops[i]++;
-            }
-        }
-
-        setInterval(drawMatrix, 35);
-
-        let timerInterval;
-        let timeLeft = 25 * 60;
-        let isRunning = false;
-
-        function updateTimer() {
-            const minutes = Math.floor(timeLeft / 60);
-            let seconds = timeLeft % 60;
-            seconds = seconds < 10 ? '0' + seconds : seconds;
-            document.getElementById('timer').innerText = `${minutes}:${seconds}`;
-        }
-
-        function startStopTimer() {
-            if (isRunning) {
-                clearInterval(timerInterval);
-                document.getElementById('startStop').innerText = 'Start';
-            } else {
-                timerInterval = setInterval(() => {
-                    if (timeLeft <= 0) {
-                        clearInterval(timerInterval);
-                        alert('Time is up!');
-                        document.getElementById('startStop').innerText = 'Start';
-                        timeLeft = 25 * 60;
-                        updateTimer();
-                        isRunning = false;
-                    } else {
-                        timeLeft--;
-                        updateTimer();
-                    }
-                }, 1000);
-                document.getElementById('startStop').innerText = 'Stop';
-            }
-            isRunning = !isRunning;
-        }
-
-        function resetTimer() {
-            clearInterval(timerInterval);
-            timeLeft = 25 * 60;
-            updateTimer();
-            document.getElementById('startStop').innerText = 'Start';
-            isRunning = false;
-        }
-
-        function changeTheme() {
-            const selectedTheme = document.getElementById('themeSelect').value;
-            const root = document.documentElement;
-            const timerElement = document.getElementById('timer');
-
-            // Update text color based on the theme
-            if (selectedTheme === 'yellow') {
-                root.style.setProperty('--text-color', 'black'); // Black text for yellow
-                root.style.setProperty('--select-color', 'rgba(0, 0, 0, 0.8)'); // More opaque select for yellow
-                root.style.setProperty('--select-hover-color', 'rgba(0, 0, 0, 1)');
-                timerElement.style.color = 'black'; // Set timer text to black
-            } else {
-                const themeHexColor = getHexColor(selectedTheme);
-                root.style.setProperty('--text-color', themeHexColor); // Use selected color
-                root.style.setProperty('--select-color', 'rgba(0, 0, 0, 0.5)'); // Less opaque select for other themes
-                root.style.setProperty('--select-hover-color', 'rgba(0, 0, 0, 0.7)');
-                timerElement.style.color = themeHexColor; // Set timer text to the theme color
-            }
-
-            // Update other CSS variables
-            root.style.setProperty('--button-color', `rgba(${getRGB(selectedTheme)}, 0.5)`);
-            root.style.setProperty('--button-hover-color', `rgba(${getRGB(selectedTheme)}, 0.7)`);
-            
-            root.style.setProperty('--timer-shadow-color', `rgba(${getRGB(selectedTheme)}, 0.5)`);
-
-            // Correctly update the themeColor for the matrix animation
-            themeColor = getHexColor(selectedTheme);
-
-            // Update timer shadow
-            timerElement.style.boxShadow = `0 0 30px var(--timer-shadow-color)`;
-        }
-
-        function getRGB(color) {
-            switch (color) {
-                case 'green': return '0, 255, 0';
-                case 'blue': return '0, 0, 255';
-                case 'red': return '255, 0, 0';
-                case 'yellow': return '255, 255, 0';
-                default: return '0, 255, 0';
-            }
-        }
-        function getHexColor(color) {
-            switch (color) {
-                case 'green': return '#0f0';
-                case 'blue': return '#00f';
-                case 'red': return '#f00';
-                case 'yellow': return '#ff0';
-                default: return '#0f0';
-            }
-        }
-
-        document.getElementById('startStop').addEventListener('click', startStopTimer);
-        document.getElementById('reset').addEventListener('click', resetTimer);
-        document.getElementById('themeSelect').addEventListener('change', changeTheme);
-        updateTimer();
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
