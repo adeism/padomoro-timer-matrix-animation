@@ -1,168 +1,213 @@
-:root {
-    --background-color: black;
-    --text-color: #0f0;
-    --button-color: rgba(0, 255, 0, 0.5);
-    --button-hover-color: rgba(0, 255, 0, 0.7);
-    --select-color: rgba(0, 0, 0, 0.5);
-    --select-hover-color: rgba(0, 0, 0, 0.7);
-    --font-family: 'Courier New', Courier, monospace;
+const canvas = document.getElementById('matrixCanvas');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+const matrixChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%$#@!';
+const matrix = matrixChars.split('');
+
+const fontSize = 10;
+const columns = canvas.width / fontSize;
+const drops = [];
+
+for (let x = 0; x < columns; x++) {
+    drops[x] = 1;
 }
 
-body, html {
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-    background-color: var(--background-color);
-    color: var(--text-color);
-    font-family: var(--font-family);
-}
-canvas {
-    display: block;
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: -1;
-}
-#timer {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 72px;
-    background-color: rgba(0, 0, 0, 0.5);
-    padding: 30px;
-    border-radius: 15px;
-    box-shadow: 0 0 30px var(--button-color);
-    color: var(--text-color);
-    z-index: 10;
-}
-.button-container {
-    position: absolute;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: 20px;
-    z-index: 10;
+let themeColor = 'rgb(0, 255, 0)'; // Initial theme color
+
+function drawMatrix() {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = themeColor; // Use the updated themeColor
+    ctx.font = fontSize + 'px arial';
+
+    for (let i = 0; i < drops.length; i++) {
+        const text = matrix[Math.floor(Math.random() * matrix.length)];
+        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+            drops[i] = 0;
+        }
+        drops[i]++;
+    }
 }
 
-/* Perubahan untuk tombol */
-button {
-    padding: 10px 20px; /* Padding lebih kecil */
-    font-size: 18px; /* Font size lebih kecil */
-    background-color: transparent; /* Background transparan */
-    border: 1px solid var(--button-color); /* Tambah border */
-    border-radius: 5px; /* Border radius lebih kecil */
-    cursor: pointer;
-    box-shadow: 0 0 15px var(--button-color);
-    color: var(--text-color);
-    transition: all 0.3s ease;
+setInterval(drawMatrix, 35);
+
+let timerInterval;
+let timeLeft = 25 * 60;
+let isRunning = false;
+let isBreakTime = false;
+
+function updateTimer() {
+    const minutes = Math.floor(timeLeft / 60);
+    let seconds = timeLeft % 60;
+    seconds = seconds < 10 ? '0' + seconds : seconds;
+    document.getElementById('timer').innerText = `${minutes}:${seconds}`;
 }
 
-button:hover,
-button:focus {
-    background-color: transparent; /* Background hover dan focus tetap transparan */
-    outline: none; /* Hilangkan outline bawaan */
+function startStopTimer() {
+    if (isRunning) {
+        clearInterval(timerInterval);
+        document.getElementById('startStop').innerText = 'Start';
+    } else {
+        timerInterval = setInterval(() => {
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                if (!isBreakTime) {
+                    showPopup(); // Tampilkan popup saat waktu kerja habis
+                } else {
+                    showAlert();  // Tampilkan alert saat break time habis
+                }
+                isRunning = false;
+            } else {
+                timeLeft--;
+                updateTimer();
+            }
+        }, 1000);
+        document.getElementById('startStop').innerText = 'Stop';
+    }
+    isRunning = !isRunning;
 }
 
-/* Efek visual saat tombol focus */
-button:focus {
-  border-color: var(--text-color); /* Ubah warna border saat focus */
+function resetTimer() {
+    clearInterval(timerInterval);
+    timeLeft = 25 * 60; // Selalu reset ke 25 menit
+    updateTimer();
+    document.getElementById('startStop').innerText = 'Start';
+    isRunning = false;
+    isBreakTime = false; // Set isBreakTime ke false setelah reset
 }
 
-select {
-    padding: 10px;
-    font-size: 18px;
-    background-color: var(--select-color);
-    border: none;
-    border-radius: 5px;
-    color: var(--text-color);
-    cursor: pointer;
-    box-shadow: 0 0 10px var(--button-color);
-    transition: all 0.3s ease;
+function changeTheme() {
+    const selectedTheme = document.getElementById('themeSelect').value;
+    const root = document.documentElement;
+    const timerElement = document.getElementById('timer');
+    const startStopButton = document.getElementById('startStop');
+    const resetButton = document.getElementById('reset');
+    const themeSelect = document.getElementById('themeSelect');
+
+    if (selectedTheme === 'yellow') {
+        // Yellow theme specific styling
+        root.style.setProperty('--text-color', '#ff0');
+        root.style.setProperty('--button-color', 'rgba(255, 255, 0, 0.5)');
+        root.style.setProperty('--button-hover-color', 'rgba(255, 255, 0, 0.7)');
+        root.style.setProperty('--select-color', 'rgba(255, 255, 0, 0.5)');
+        root.style.setProperty('--select-hover-color', 'rgba(255, 255, 0, 0.7)');
+
+        timerElement.style.color = '#ff0'; // Yellow timer text
+        timerElement.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+
+        startStopButton.style.color = '#ff0';
+        resetButton.style.color = '#ff0';
+        themeSelect.style.color = '#ff0';
+    } else {
+        const themeHexColor = getHexColor(selectedTheme);
+        const themeRGB = getRGB(selectedTheme);
+
+        root.style.setProperty('--text-color', themeHexColor);
+        root.style.setProperty('--button-color', `rgba(${themeRGB}, 0.5)`);
+        root.style.setProperty('--button-hover-color', `rgba(${themeRGB}, 0.7)`);
+        root.style.setProperty('--select-color', 'rgba(0, 0, 0, 0.5)');
+        root.style.setProperty('--select-hover-color', 'rgba(0, 0, 0, 0.7)');
+
+        timerElement.style.color = themeHexColor;
+        timerElement.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+
+        startStopButton.style.color = themeHexColor;
+        resetButton.style.color = themeHexColor;
+        themeSelect.style.color = themeHexColor;
+    }
+
+    // Update matrix animation color
+    themeColor = `rgb(${getRGB(selectedTheme)})`;
+
+    // Update timer shadow
+    timerElement.style.boxShadow = `0 0 30px var(--button-color)`;
 }
 
-select:hover,
-select:focus {
-    background-color: var(--select-hover-color);
-    outline: none;
+function getRGB(color) {
+    switch (color) {
+        case 'green': return '0, 255, 0';
+        case 'blue': return '0, 0, 255';
+        case 'red': return '255, 0, 0';
+        case 'yellow': return '255, 255, 0';
+        default: return '0, 255, 0';
+    }
 }
 
-select:focus{
-    box-shadow: 0 0 15px var(--text-color);
+function getHexColor(color) {
+    switch (color) {
+        case 'green': return '#0f0';
+        case 'blue': return '#00f';
+        case 'red': return '#f00';
+        case 'yellow': return '#ff0';
+        default: return '#0f0';
+    }
 }
 
-/* Popup Styles */
-#popup {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 100; /* Pastikan popup di atas elemen lain */
-    visibility: hidden; /* Sembunyikan secara default */
-    opacity: 0;
-    transition: visibility 0s, opacity 0.5s ease;
+document.getElementById('startStop').addEventListener('click', startStopTimer);
+document.getElementById('reset').addEventListener('click', resetTimer);
+document.getElementById('themeSelect').addEventListener('change', changeTheme);
+updateTimer();
+
+// Fungsi untuk menampilkan popup
+function showPopup() {
+    const popup = document.getElementById('popup');
+    popup.classList.add('show');
 }
 
-#popup.show {
-    visibility: visible;
-    opacity: 1;
+// Fungsi untuk menyembunyikan popup
+function hidePopup() {
+    const popup = document.getElementById('popup');
+    popup.classList.remove('show');
 }
 
-#popup-content {
-    background-color: var(--background-color);
-    padding: 30px;
-    border-radius: 10px;
-    text-align: center;
-    box-shadow: 0 0 20px var(--button-color);
+// Event listener untuk tombol Ok
+document.getElementById('okButton').addEventListener('click', () => {
+    hidePopup();
+    isBreakTime = true;
+    timeLeft = 5 * 60; // Set waktu istirahat 5 menit
+    updateTimer();
+    startStopTimer(); // Langsung mulai timer istirahat
+});
+
+// Event listener untuk tombol Skip
+document.getElementById('skipButton').addEventListener('click', () => {
+    hidePopup();
+    resetTimer(); // Reset ke 25 menit
+});
+
+// Fungsi untuk memainkan suara alert (opsional)
+function playAlertSound() {
+  // Implementasi sederhana, browser mungkin memblokir autoplay
+  const audio = new Audio('path/to/your/sound.mp3'); // Ganti dengan path ke file audio
+  audio.play().catch(error => {
+    console.warn("Autoplay audio diblokir oleh browser:", error);
+  });
 }
 
-#popup-content h2 {
-    margin-top: 0;
-    color: var(--text-color);
+// Fungsi untuk menampilkan alert
+let alertTimeout; // Variabel untuk menyimpan timeout alert
+function showAlert() {
+    const alert = document.getElementById('alert');
+    alert.classList.add('show');
+    playAlertSound();
+
+    // Auto-close alert setelah 10 detik
+    clearTimeout(alertTimeout); // Hapus timeout sebelumnya jika ada
+    alertTimeout = setTimeout(() => {
+        hideAlert();
+        resetTimer(); // Reset dan mulai timer utama
+        isBreakTime = false; // Set kembali ke mode kerja
+        startStopTimer(); // Mulai timer utama
+    }, 10000);
 }
 
-#popup-content p {
-    margin-bottom: 20px;
-    color: var(--text-color);
-}
-
-.popup-buttons button {
-    margin: 0 10px;
-}
-
-/* Alert Styles */
-#alert {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: var(--background-color);
-    padding: 20px 30px;
-    border-radius: 10px;
-    text-align: center;
-    box-shadow: 0 0 20px red;
-    z-index: 110; /* Alert harus di atas popup */
-    visibility: hidden;
-    opacity: 0;
-    transition: visibility 0s, opacity 0.5s ease;
-}
-
-#alert.show {
-    visibility: visible;
-    opacity: 1;
-}
-
-#alert h2 {
-    margin-top: 0;
-    color: red; /* Warna merah untuk alert */
-}
-
-#alert p {
-    color: var(--text-color);
+// Fungsi untuk menyembunyikan alert
+function hideAlert() {
+    const alert = document.getElementById('alert');
+    alert.classList.remove('show');
 }
